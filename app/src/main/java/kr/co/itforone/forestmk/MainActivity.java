@@ -357,14 +357,12 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             list = webView.copyBackForwardList();
+            if(list.getSize() >1 ){
+                backurl = list.getItemAtIndex(list.getCurrentIndex() - 1).getUrl();
+            }
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
-
-        if(list.getSize() >1 ){
-            backurl = list.getItemAtIndex(list.getCurrentIndex() - 1).getUrl();
-        }
-
 
         if(backurl.contains("write_comment_update.php") || backurl.contains("delete_comment.php")){
             webView.clearCache(true);
