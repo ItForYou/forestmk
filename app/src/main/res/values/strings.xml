@@ -3,4 +3,6 @@
     <string name="home">http://forestmk.itforone.co.kr/bbs/board.php?bo_table=deal</string>
     <string name="login">http://forestmk.itforone.co.kr/bbs/login_check.php</string>
     <string name="chatlist">http://forestmk.itforone.co.kr/bbs/chatting_list.php</string>
+
+
 </resources>

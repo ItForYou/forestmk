@@ -9,8 +9,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -25,6 +28,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.ViewTreeObserver;
 import android.webkit.ValueCallback;
+import android.webkit.WebBackForwardList;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.ImageView;
@@ -35,6 +39,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.InstanceIdResult;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -57,9 +62,13 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private Location location;
     static final int PERMISSION_REQUEST_CODE = 1;
+    static final int CROP_FROM_ALBUM =2;
+    public Uri mImageCaptureUri,croppath;
     String[] PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
     };
     public void set_filePathCallbackLollipop(ValueCallback<Uri[]> filePathCallbackLollipop){
         this.filePathCallbackLollipop = filePathCallbackLollipop;
@@ -207,52 +216,186 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == ChromeManager.FILECHOOSER_LOLLIPOP_REQ_CODE) {
-            Uri[] result = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                if (resultCode == RESULT_OK) {
-                    if (data != null) {
-                        //String dataString = data.getDataString();
-                        ClipData clipData = data.getClipData();
-                        if (clipData != null) {
-                            result = new Uri[clipData.getItemCount()];
-                            for (int i = 0; i < clipData.getItemCount(); i++) {
-                                ClipData.Item item = clipData.getItemAt(i);
-                                result[i] = item.getUri();
+//        if (requestCode == ChromeManager.FILECHOOSER_LOLLIPOP_REQ_CODE) {
+//            Uri[] result = null;
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                if (resultCode == RESULT_OK) {
+//                    if (data != null) {
+//                        //String dataString = data.getDataString();
+//                        ClipData clipData = data.getClipData();
+//                        if (clipData != null) {
+//                            result = new Uri[clipData.getItemCount()];
+//                            for (int i = 0; i < clipData.getItemCount(); i++) {
+//                                ClipData.Item item = clipData.getItemAt(i);
+//                                result[i] = item.getUri();
+//                            }
+//                        }
+//                        else {
+//                            result = ChromeManager.FileChooserParams.parseResult(resultCode, data);
+//                            //result = (data == null) ? new Uri[]{mCapturedImageURI} : WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+//                        }
+//                        filePathCallbackLollipop.onReceiveValue(result);
+//                    }
+//                    else{
+//                        filePathCallbackLollipop.onReceiveValue(null);
+//                        filePathCallbackLollipop = null;
+//                    }
+//                }
+//                else{
+//                    try {
+//                        if (filePathCallbackLollipop != null) {
+//                            filePathCallbackLollipop.onReceiveValue(null);
+//                            filePathCallbackLollipop = null;
+//                        }
+//                    }catch (Exception e){
+//
+//                    }
+//                }
+//            }
+//        }
+        switch (requestCode) {
+            case ChromeManager.FILECHOOSER_LOLLIPOP_REQ_CODE:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    if (resultCode == RESULT_OK) {
+                        if (data != null) {
+                            //String dataString = data.getDataString();
+                          //  ClipData clipData = data.getClipData();
+                            mImageCaptureUri = data.getData();
+
+                            try {
+                                Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), mImageCaptureUri);
+                                String path = MediaStore.Images.Media.insertImage(this.getContentResolver(), bitmap, "Title", null);
+                                croppath =  Uri.parse(path);
+                        } catch (IOException e) {
+                                e.printStackTrace();
                             }
+
+
+                            try {
+                                Intent intent = new Intent("com.android.camera.action.CROP");
+                                intent.setDataAndType(mImageCaptureUri, "image/*");
+                                intent.putExtra("outputX", 500);
+                                intent.putExtra("outputY", 500);
+                                intent.putExtra("aspectX", 1);
+                                intent.putExtra("aspectY", 1);
+                                intent.putExtra("scale", true);
+                                intent.putExtra("return-data", true);
+                                intent.putExtra(MediaStore.EXTRA_OUTPUT , croppath);
+                                startActivityForResult(intent, CROP_FROM_ALBUM);
+                            } catch ( ActivityNotFoundException e){
+                                String errorMessage = "your device doesn't support the crop action!";
+                                Toast toast = Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+//                        if (clipData != null) {
+//                            result = new Uri[clipData.getItemCount()];
+//                            for (int i = 0; i < clipData.getItemCount(); i++) {
+//                                ClipData.Item item = clipData.getItemAt(i);
+//                                result[i] = item.getUri();
+//                            }
+//                        }
+//                        else {
+//                            result = ChromeManager.FileChooserParams.parseResult(resultCode, data);
+//                            //result = (data == null) ? new Uri[]{mCapturedImageURI} : WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+//                        }
+                        } else {
+                            filePathCallbackLollipop.onReceiveValue(null);
+                            filePathCallbackLollipop = null;
                         }
-                        else {
-                            result = ChromeManager.FileChooserParams.parseResult(resultCode, data);
-                            //result = (data == null) ? new Uri[]{mCapturedImageURI} : WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    } else {
+                        try {
+                            if (filePathCallbackLollipop != null) {
+                                filePathCallbackLollipop.onReceiveValue(null);
+                                filePathCallbackLollipop = null;
+
+                            }
+                        } catch (Exception e) {
+
                         }
-                        filePathCallbackLollipop.onReceiveValue(result);
-                    }
-                    else{
-                        filePathCallbackLollipop.onReceiveValue(null);
-                        filePathCallbackLollipop = null;
                     }
                 }
-                else{
+                break;
+            case CROP_FROM_ALBUM:
+                if (resultCode == RESULT_OK) {
+                    Log.d("imgresult",String.valueOf(resultCode));
+                   Uri[] result = null;
+                    result = new Uri[1];
+                 // Bitmap photo = data.getExtras().getParcelable("data");
+                    /*ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+                    String path = MediaStore.Images.Media.insertImage(this.getContentResolver(), photo, "Title", null);*/
+                    //result[0] = Uri.parse(path);
+                    result[0] = croppath;
+
+                    if (result[0] != null) {
+                         //  Toast.makeText(getApplicationContext(),"step1",Toast.LENGTH_LONG).show();
+                        filePathCallbackLollipop.onReceiveValue(result);
+                    } else {
+                       //  Toast.makeText(getApplicationContext(),"step2",Toast.LENGTH_LONG).show();
+                    }
+                    break;
+
+                }
+                else {
                     try {
                         if (filePathCallbackLollipop != null) {
                             filePathCallbackLollipop.onReceiveValue(null);
                             filePathCallbackLollipop = null;
                         }
-                    }catch (Exception e){
+                    } catch (Exception e) {
 
                     }
                 }
-            }
         }
     }
-
+   // String[] twostempurls = new String[]{getString(R.string) };
     @Override
     public void onBackPressed(){
+        //Toast.makeText(getApplicationContext(),url,Toast.LENGTH_LONG).show();
+        WebBackForwardList list = null;
+        String backurl ="";
 
-        if(webView.getUrl().contains(getString(R.string.chatlist))){
+        try {
+            list = webView.copyBackForwardList();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
+        if(list.getSize() >1 ){
+            backurl = list.getItemAtIndex(list.getCurrentIndex() - 1).getUrl();
+        }
+
+
+        if(backurl.contains("write_comment_update.php") || backurl.contains("delete_comment.php")){
+            webView.clearCache(true);
             webView.loadUrl(getString(R.string.home));
         }
-       else if(webView.getUrl().equals(getString(R.string.home))){
+        else if(webView.getUrl().contains("write.php")) {
+            new AlertDialog.Builder(this)
+                    .setTitle("")
+                    .setMessage("글쓰기를 종료하시겠습니까?")
+                    .setIcon(android.R.drawable.ic_menu_save)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            // 확인시 처리 로직
+                            webView.goBack();
+                        }})
+                    .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            // 취소시 처리 로직
+                        }})
+                    .show();
+        }
+
+        else if(webView.getUrl().contains("chatting.php")) {
+            webView.loadUrl("javascript:leavepage()");
+        }
+
+        else if(webView.getUrl().contains(getString(R.string.chatlist))){
+            webView.clearCache(true);
+            webView.loadUrl(getString(R.string.home));
+        }
+        else if(webView.getUrl().contains(getString(R.string.home)) && !webView.getUrl().contains("wr_id")){
             long tempTime = System.currentTimeMillis();
             long intervalTime = tempTime - backPrssedTime;
             if (0 <= intervalTime && 2000 >= intervalTime){
@@ -261,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
             else
             {
                 backPrssedTime = tempTime;
+                webView.clearCache(true);
                 Toast.makeText(getApplicationContext(), "한번 더 뒤로가기 누를시 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
             }
         }
@@ -278,6 +422,7 @@ public class MainActivity extends AppCompatActivity {
             else
             {
                 backPrssedTime = tempTime;
+                webView.clearCache(true);
                 Toast.makeText(getApplicationContext(), "한번 더 뒤로가기 누를시 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
             }
         }
