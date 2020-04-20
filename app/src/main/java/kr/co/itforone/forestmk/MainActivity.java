@@ -26,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewTreeObserver;
 import android.webkit.ValueCallback;
 import android.webkit.WebBackForwardList;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -97,6 +99,8 @@ public class MainActivity extends AppCompatActivity {
                 if (!hasPermissions(PERMISSIONS)){
 
                 }else{
+                    locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                    /* LocationPosition.act=MainActivity.this;
                     LocationPosition.setPosition(this);
                     if(LocationPosition.lng==0.0){
@@ -145,6 +149,18 @@ public class MainActivity extends AppCompatActivity {
         settings.setDomStorageEnabled(true);//HTML5에서 DOM 사용여부
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);//캐시 사용모드 LOAD_NO_CACHE는 캐시를 사용않는다는 뜻
         ///settings.setUserAgentString(settings.getUserAgentString()+"//Brunei");
+
+        webView.setLongClickable(true);
+        webView.setOnLongClickListener(new View.OnLongClickListener(){
+                                           @Override
+                                           public boolean onLongClick(View v) {
+                                               if(webView.getUrl().contains("recent_list.php")){
+                                                   webView.loadUrl("javascript:longclick_event()");
+                                               }
+                                               return false;
+                                           }
+                                       }
+        );
 
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
@@ -213,6 +229,21 @@ public class MainActivity extends AppCompatActivity {
     public void Yesrefresh(){
         refreshlayout.setEnabled(true);
     }
+    public double getlat(){
+        //Toast.makeText(getApplicationContext(),""+location.getLatitude() + "//" +location.getLongitude(),Toast.LENGTH_LONG).show();
+        if(location!=null) {
+            return location.getLatitude();
+        }
+        else return 0;
+    }
+    public double getlng(){
+        //Toast.makeText(getApplicationContext(),""+location.getLatitude() + "//" +location.getLongitude(),Toast.LENGTH_LONG).show();
+        if(location!=null) {
+            return location.getLongitude();
+        }
+        else return 0;
+
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -269,7 +300,6 @@ public class MainActivity extends AppCompatActivity {
                         } catch (IOException e) {
                                 e.printStackTrace();
                             }
-
 
                             try {
                                 Intent intent = new Intent("com.android.camera.action.CROP");
