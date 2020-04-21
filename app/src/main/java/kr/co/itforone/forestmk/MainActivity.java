@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
         settings.setDatabaseEnabled(true);//HTML5에서 db 사용여부 -> indexDB
         settings.setDomStorageEnabled(true);//HTML5에서 DOM 사용여부
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);//캐시 사용모드 LOAD_NO_CACHE는 캐시를 사용않는다는 뜻
+        settings.setTextZoom(100);       // 폰트크기 고정
         ///settings.setUserAgentString(settings.getUserAgentString()+"//Brunei");
 
         webView.setLongClickable(true);
@@ -395,10 +396,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if(backurl.contains("write_comment_update.php") || backurl.contains("delete_comment.php")){
+
             webView.clearCache(true);
             webView.loadUrl(getString(R.string.home));
         }
         else if(webView.getUrl().contains("write.php")) {
+
             new AlertDialog.Builder(this)
                     .setTitle("")
                     .setMessage("글쓰기를 종료하시겠습니까?")
@@ -416,14 +419,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         else if(webView.getUrl().contains("chatting.php")) {
+
             webView.loadUrl("javascript:leavepage()");
         }
 
-        else if(webView.getUrl().contains(getString(R.string.chatlist))){
+        else if(webView.getUrl().contains("chatting.list.php")){
+
             webView.clearCache(true);
             webView.loadUrl(getString(R.string.home));
         }
         else if(webView.getUrl().contains(getString(R.string.home)) && !webView.getUrl().contains("wr_id")){
+
             long tempTime = System.currentTimeMillis();
             long intervalTime = tempTime - backPrssedTime;
             if (0 <= intervalTime && 2000 >= intervalTime){
@@ -436,8 +442,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "한번 더 뒤로가기 누를시 앱이 종료됩니다.", Toast.LENGTH_SHORT).show();
             }
         }
-
         else if(webView.canGoBack()){
+
 //            String url = webView.copyBackForwardList().getItemAtIndex(webView.copyBackForwardList().getCurrentIndex()-1).getUrl();
 //            webView.loadUrl(url);
             webView.goBack();

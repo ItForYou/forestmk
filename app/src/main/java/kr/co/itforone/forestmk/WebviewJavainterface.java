@@ -45,7 +45,10 @@ class WebviewJavainterface {
         mainActivity.webView.post(new Runnable() {
             @Override
             public void run() {
-                mainActivity.webView.loadUrl("javascript:sort_distance('" + finalLat + "','" + finalLng + "');");
+                if(mainActivity.webView.getUrl().contains("register_form.php") || mainActivity.webView.getUrl().contains("mymap.php"))
+                        mainActivity.webView.loadUrl("javascript:trans_addr('" + finalLat + "','" + finalLng + "');");
+                else
+                        mainActivity.webView.loadUrl("javascript:sort_distance('" + finalLat + "','" + finalLng + "');");
             }
         });
         // Toast.makeText(mainActivity.getApplicationContext(),""+lat+" , "+lng, Toast.LENGTH_LONG).show();
