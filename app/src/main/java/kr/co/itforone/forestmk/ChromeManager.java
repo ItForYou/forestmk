@@ -37,9 +37,9 @@ class ChromeManager extends WebChromeClient {
 //        i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);
 
         // Create file chooser intent
+
         Intent i = new Intent(Intent.ACTION_PICK);
         i. setDataAndType(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-
         mainActivity.startActivityForResult(i, FILECHOOSER_LOLLIPOP_REQ_CODE);
         return true;
     }

@@ -288,17 +288,17 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case ChromeManager.FILECHOOSER_LOLLIPOP_REQ_CODE:
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    if (resultCode == RESULT_OK) {
+                    if (resultCode == RESULT_OK && webView.getUrl().contains("register_form.php")) {
                         if (data != null) {
                             //String dataString = data.getDataString();
-                          //  ClipData clipData = data.getClipData();
+                            //  ClipData clipData = data.getClipData();
                             mImageCaptureUri = data.getData();
 
                             try {
                                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), mImageCaptureUri);
                                 String path = MediaStore.Images.Media.insertImage(this.getContentResolver(), bitmap, "Title", null);
-                                croppath =  Uri.parse(path);
-                        } catch (IOException e) {
+                                croppath = Uri.parse(path);
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
 
@@ -311,9 +311,9 @@ public class MainActivity extends AppCompatActivity {
                                 intent.putExtra("aspectY", 1);
                                 intent.putExtra("scale", true);
                                 intent.putExtra("return-data", true);
-                                intent.putExtra(MediaStore.EXTRA_OUTPUT , croppath);
+                                intent.putExtra(MediaStore.EXTRA_OUTPUT, croppath);
                                 startActivityForResult(intent, CROP_FROM_ALBUM);
-                            } catch ( ActivityNotFoundException e){
+                            } catch (ActivityNotFoundException e) {
                                 String errorMessage = "your device doesn't support the crop action!";
                                 Toast toast = Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT);
                                 toast.show();
@@ -333,7 +333,29 @@ public class MainActivity extends AppCompatActivity {
                             filePathCallbackLollipop.onReceiveValue(null);
                             filePathCallbackLollipop = null;
                         }
-                    } else {
+                    } else if (resultCode == RESULT_OK && !webView.getUrl().contains("register_form.php")){
+                                Uri[] result = null;
+                                 if (data != null) {
+                                     //String dataString = data.getDataString();
+                                     ClipData clipData = data.getClipData();
+                                     if (clipData != null) {
+                                         result = new Uri[clipData.getItemCount()];
+                                         for (int i = 0; i < clipData.getItemCount(); i++) {
+                                             ClipData.Item item = clipData.getItemAt(i);
+                                             result[i] = item.getUri();
+                                         }
+                                     } else {
+                                         result = ChromeManager.FileChooserParams.parseResult(resultCode, data);
+                                         //result = (data == null) ? new Uri[]{mCapturedImageURI} : WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                                     }
+                                     filePathCallbackLollipop.onReceiveValue(result);
+                                 }
+                                else{
+                                    filePathCallbackLollipop.onReceiveValue(null);
+                                    filePathCallbackLollipop = null;
+                                }
+                    }
+                    else {
                         try {
                             if (filePathCallbackLollipop != null) {
                                 filePathCallbackLollipop.onReceiveValue(null);
