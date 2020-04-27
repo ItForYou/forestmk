@@ -401,6 +401,12 @@ public class MainActivity extends AppCompatActivity {
                 }
         }
     }
+
+    public void move_list (View view) {
+        Intent i = new Intent(this, ListActivity.class);
+        startActivity(i);
+    }
+
    // String[] twostempurls = new String[]{getString(R.string) };
     @Override
     public void onBackPressed(){
@@ -421,7 +427,9 @@ public class MainActivity extends AppCompatActivity {
 
             webView.clearCache(true);
             webView.loadUrl(getString(R.string.home));
+
         }
+
         else if(webView.getUrl().contains("write.php")) {
 
             new AlertDialog.Builder(this)
